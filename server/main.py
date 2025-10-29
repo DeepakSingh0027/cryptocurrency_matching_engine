@@ -33,6 +33,7 @@ app.include_router(streams.router , prefix="/wsV1", tags=["WebSocket API"])
 async def startup_event():
     logger.info("Starting up the Cryptocurrency Matching Engine...")
     app.state.engine = MatchingEngine(app=app)
+    #market data connections management
     app.state.connections = []
     #for trade websockets management
     app.state.t_connections = []

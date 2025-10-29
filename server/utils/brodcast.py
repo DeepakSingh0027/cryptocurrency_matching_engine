@@ -2,7 +2,6 @@ from datetime import datetime
 import asyncio
 import json
 
-
 async def broadcast_market_update(app, engine):
     """Broadcast the latest market data update to all connected WebSocket clients for a given symbol."""
     connections = app.state.connections
