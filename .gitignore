@@ -1,0 +1,9 @@
+server/__pycache__
+.pytest_cache
+server/utils/__pycache__
+server/models/__pycache__
+server/services/__pycache__
+server/routes/__pycache__
+server/tests/__pycache__
+server/engine/__pycache__
+server/api/__pycache__

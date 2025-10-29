@@ -42,7 +42,7 @@ class MatchingEngine:
             asyncio.create_task(broadcast_market_update(self.app,self))
 
         # Broadcast trade updates if there are trades executed
-        if trades:
+        if isinstance(trades, list) and len(trades) > 0:
             asyncio.create_task(broadcast_trade_update(self.app,trades))
             logger.info(f"[ENGINE] Executed {len(trades)} trade(s):")
             for t in trades:

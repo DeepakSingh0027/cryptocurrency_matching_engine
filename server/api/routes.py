@@ -14,8 +14,8 @@ async def place_order(request: Request, order: Order):
     try:
         engine = request.app.state.engine
         trades = engine.process_order(order)
-        if trades.get("status") == "cancelled":
+        if isinstance(trades, dict) and trades.get("status") == "cancelled":
             return {"status": "cancelled", "order_id": trades["order_id"]}
         return {"status": "success", "trades": trades}
     except Exception as e:
-        raise HTTPException(status_code=400, detail="Unstructured order data") from e
+        raise HTTPException(status_code=400, detail=str(e)) from e
