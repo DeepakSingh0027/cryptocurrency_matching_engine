@@ -57,9 +57,23 @@ class OrderBook:
     # Find Best Bid and Offer
     def get_bbo(self):
         """Return best bid/ask snapshot."""
-        # Find the best bid and ask prices
-        best_bid = next(iter(self.bids.items()), (None, None))
-        best_ask = next(iter(self.asks.items()), (None, None))
+        # Check if there are any bids
+        if len(self.bids) > 0:
+            # Get the first (highest) bid price and its list of orders
+            best_bid_price = list(self.bids.keys())[0]
+            best_bid_orders = self.bids[best_bid_price]
+            best_bid = (best_bid_price, best_bid_orders)
+        else:
+            best_bid = (None, None)
+
+        # Check if there are any asks
+        if len(self.asks) > 0:
+            # Get the first (lowest) ask price and its list of orders
+            best_ask_price = list(self.asks.keys())[0]
+            best_ask_orders = self.asks[best_ask_price]
+            best_ask = (best_ask_price, best_ask_orders)
+        else:
+            best_ask = (None, None)
         # Construct BBO dictionary
         bbo = {
             "symbol": self.symbol,
@@ -108,7 +122,7 @@ class OrderBook:
             # If insufficient, cancel entire order
             if total_available < incoming.quantity:
                 logger.info(f"[FOK CANCELLED] {incoming.order_id} - Insufficient liquidity.")
-                return []
+                return {"status": "cancelled", "order_id": incoming.order_id}
             else:
                 # Execute fully (same logic as LIMIT but without resting)
                 logger.info(f"[FOK EXECUTING] {incoming.order_id} - Full liquidity available.")
@@ -163,6 +177,12 @@ class OrderBook:
 
         # Handle order types
         if incoming.type == OrderType.MARKET:
+            if trades == []:
+                return {"status": "cancelled", "order_id": incoming.order_id}
+            elif remaining_qty > 0:
+                logger.info(f"[MARKET ORDER PARTIAL FILL] {incoming.order_id} - Unfilled qty: {remaining_qty}")
+            else:
+                logger.info(f"[MARKET ORDER FILLED] {incoming.order_id}")
             # MARKET: no resting, cancel leftover
             remaining_qty = Decimal("0")
 
@@ -173,7 +193,15 @@ class OrderBook:
                 self.add_order_to_book(incoming)
 
         elif incoming.type == OrderType.IOC:
-            # IOC: cancel unfilled portion immediately
+            if trades == []:
+                logger.info(f"[IOC CANCELLED] {incoming.order_id} - No match found.")
+                return {"status": "cancelled", "order_id": incoming.order_id}
+            elif remaining_qty > 0:
+                logger.info(f"[IOC PARTIAL FILL] {incoming.order_id} - Unfilled qty: {remaining_qty}")
+            else:
+                logger.info(f"[IOC FILLED] {incoming.order_id}")
+            
+            # IOC: cancel leftover
             remaining_qty = Decimal("0")
 
         # Disseminate BBO after any match
